@@ -34,6 +34,7 @@ find_library(ASSIMP_ABS_LIBRARIES NAMES ${ASSIMP_LIBRARIES} assimp HINTS ${ASSIM
 set(ASSIMP_LIBRARIES "${ASSIMP_ABS_LIBRARIES}")
 find_package(Boost REQUIRED system filesystem)
 find_package(console_bridge REQUIRED)
+find_package(eigen3_cmake_module REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(octomap REQUIRED)
 find_package(ament_cmake REQUIRED)
@@ -48,16 +49,7 @@ if (HAVE_QHULL_2011)
   add_definitions(-DGEOMETRIC_SHAPES_HAVE_QHULL_2011)
 endif()
 
-include_directories(include
-                    ${EIGEN3_INCLUDE_DIR}
-                    ${Boost_INCLUDE_DIR}
-                    ${ASSIMP_INCLUDE_DIRS}
-                    ${OCTOMAP_INCLUDE_DIRS}
-                    ${QHULL_INCLUDE_DIRS}
-                    ${rmw_implementation_INCLUDE_DIRS}
-                    ${console_bridge_INCLUDE_DIRS}
-)
-
+include_directories(include)
 
 add_library(${PROJECT_NAME} SHARED
   src/aabb.cpp
@@ -70,21 +62,35 @@ add_library(${PROJECT_NAME} SHARED
   src/shapes.cpp
 )
 ament_target_dependencies(${PROJECT_NAME}
+    Boost
+    Eigen3
     rclcpp
     shape_msgs
     visualization_msgs
     random_numbers
     eigen_stl_containers
     geometry_msgs
+    resource_retriever
     console_bridge
     ASSIMP
-    QHULL)
+    QHULL
+)
 
 ament_export_libraries(${PROJECT_NAME})
 ament_export_include_directories(include)
-ament_export_dependencies(ASSIMP)
+ament_export_dependencies(
+	Eigen3
+	eigen3_cmake_module  # export Eigen3 headers
+	Boost
+	ASSIMP
+	random_numbers
+	eigen_stl_containers
+	shape_msgs
+	visualization_msgs
+)
 target_link_libraries(${PROJECT_NAME}
-  resource_retriever::resource_retriever
+# resource_retriever doesn't support ament export hook (fixed in 2.1.1)
+   resource_retriever::resource_retriever
 )
 
 if(BUILD_TESTING)
@@ -95,9 +101,12 @@ endif()
 
 install(TARGETS ${PROJECT_NAME}
         ARCHIVE DESTINATION lib
-        LIBRARY DESTINATION lib)
+        LIBRARY DESTINATION lib
+        RUNTIME DESTINATION bin
+)
 
-install(DIRECTORY include/${PROJECT_NAME}/
-        DESTINATION include/${PROJECT_NAME})
+install(DIRECTORY include/
+        DESTINATION include
+)
 
 ament_package()

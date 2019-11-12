@@ -95,6 +95,9 @@ target_link_libraries(${PROJECT_NAME}
 
 if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
+  # Add compile options to suppress `-Wsign-compare` and `-Wunused-variable` warnings.
+  # TODO: Remove when PR(https://github.com/ros-planning/geometric_shapes/pull/117) is merged.
+  add_compile_options(-Wno-sign-compare -Wno-unused-variable)
   # Unit tests
   add_subdirectory(test)
 endif()
